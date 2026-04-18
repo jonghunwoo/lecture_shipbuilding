@@ -1,273 +1,37 @@
-import React, { useState, useMemo } from 'react';
-import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer, Cell, PieChart, Pie } from 'recharts';
-import { Box, Package, Cpu, ArrowRightLeft, TrendingDown, Info, Calculator, ShieldCheck } from 'lucide-react';
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Inventory Strategy Analysis</title>
+    <script src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
+    <script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
+    <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://unpkg.com/recharts/umd/Recharts.js"></script>
+    <script src="https://unpkg.com/lucide-react"></script>
+</head>
+<body>
+    <div id="root"></div>
 
-const App = () => {
-  // Constants from the scenario
-  const NUM_CATEGORIES = 6;
-  const OPTIONS_PER_CAT = 3;
-  const TOTAL_MODELS = Math.pow(OPTIONS_PER_CAT, NUM_CATEGORIES); // 729
-  const TOTAL_COMPONENTS = NUM_CATEGORIES * OPTIONS_PER_CAT; // 18
-  const COST_PER_COMP = 150;
-  const COST_PER_PC = COST_PER_COMP * NUM_CATEGORIES; // 900
-  const MEAN_DEMAND_PC = 100;
-  const STD_DEV_PC = 10;
-  const LEAD_TIME = 0.25; // 3 months = 1/4 year
-  const Z_SCORE = 2.33; // Approx for 99% service level (simplified)
+    <script type="text/babel">
+        const { useState, useMemo } = React;
+        const { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer, Cell } = Recharts;
+        const { Box, Package, Cpu, ArrowRightLeft, TrendingDown, Info, Calculator, ShieldCheck } = LucideReact;
 
-  // Calculations
-  const calculations = useMemo(() => {
-    // Lead Time Demand
-    const theta_pc = MEAN_DEMAND_PC * LEAD_TIME; // 25
-    const sigma_lt_pc = STD_DEV_PC * Math.sqrt(LEAD_TIME); // 5
-    
-    // Safety Stock per PC Model
-    const ss_per_pc = Z_SCORE * sigma_lt_pc;
-    const total_units_fgi = TOTAL_MODELS * (theta_pc + ss_per_pc);
-    const total_value_fgi = total_units_fgi * COST_PER_PC;
-
-    // Component Calculations
-    // Each component is used in (3^5) = 243 models
-    const models_per_comp = Math.pow(OPTIONS_PER_CAT, NUM_CATEGORIES - 1); // 243
-    const mean_demand_comp = MEAN_DEMAND_PC * models_per_comp; // 24,300
-    const theta_comp = mean_demand_comp * LEAD_TIME; // 6,075
-    
-    // Variance of component is sum of variances of independent PC models
-    const var_lt_pc = Math.pow(sigma_lt_pc, 2); // 25
-    const sigma_lt_comp = Math.sqrt(models_per_comp * var_lt_pc); // sqrt(243 * 25) ≈ 77.94
-    
-    const ss_per_comp = Z_SCORE * sigma_lt_comp;
-    const total_units_ci = TOTAL_COMPONENTS * (theta_comp + ss_per_comp);
-    const total_value_ci = total_units_ci * COST_PER_COMP;
-
-    const savings = total_value_fgi - total_value_ci;
-    const percent_reduction = (savings / total_value_fgi) * 100;
-
-    return {
-      fgi: {
-        units: total_units_fgi,
-        value: total_value_fgi,
-        ss: ss_per_pc * TOTAL_MODELS,
-        cycle: theta_pc * TOTAL_MODELS
-      },
-      ci: {
-        units: total_units_ci,
-        value: total_value_ci,
-        ss: ss_per_comp * TOTAL_COMPONENTS,
-        cycle: theta_comp * TOTAL_COMPONENTS
-      },
-      savings,
-      percent_reduction,
-      sigma_lt_pc,
-      sigma_lt_comp
-    };
-  }, []);
-
-  const chartData = [
-    {
-      name: 'Finished Goods (FGI)',
-      'Cycle Stock Value': Math.round(calculations.fgi.cycle * COST_PER_PC),
-      'Safety Stock Value': Math.round(calculations.fgi.ss * COST_PER_PC),
-    },
-    {
-      name: 'Component (ATO)',
-      'Cycle Stock Value': Math.round(calculations.ci.cycle * COST_PER_COMP),
-      'Safety Stock Value': Math.round(calculations.ci.ss * COST_PER_COMP),
-    }
-  ];
-
-  const StatCard = ({ title, value, subtext, icon: Icon, color }) => (
-    <div className="bg-white p-6 rounded-xl shadow-sm border border-slate-100">
-      <div className="flex items-start justify-between">
-        <div>
-          <p className="text-sm font-medium text-slate-500 mb-1">{title}</p>
-          <h3 className="text-2xl font-bold text-slate-900">{value}</h3>
-          {subtext && <p className="text-xs text-slate-400 mt-1">{subtext}</p>}
-        </div>
-        <div className={`p-3 rounded-lg ${color}`}>
-          <Icon className="w-6 h-6 text-white" />
-        </div>
-      </div>
-    </div>
-  );
-
-  return (
-    <div className="min-h-screen bg-slate-50 p-4 md:p-8 font-sans">
-      <div className="max-w-6xl mx-auto space-y-8">
-        {/* Header */}
-        <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
-          <div>
-            <h1 className="text-3xl font-bold text-slate-900">Inventory Strategy Analysis</h1>
-            <p className="text-slate-500">Comparing FGI vs. Component Inventory (ATO) for 729 PC Models</p>
-          </div>
-          <div className="flex items-center gap-2 bg-blue-600 text-white px-4 py-2 rounded-lg font-bold shadow-lg">
-            <TrendingDown className="w-5 h-5" />
-            <span>{calculations.percent_reduction.toFixed(1)}% Investment Reduction</span>
-          </div>
-        </div>
-
-        {/* High Level Stats */}
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-          <StatCard 
-            title="Total PC Models" 
-            value={TOTAL_MODELS.toLocaleString()} 
-            subtext="3^6 unique configurations" 
-            icon={Package} 
-            color="bg-slate-700"
-          />
-          <StatCard 
-            title="Total Components" 
-            value={TOTAL_COMPONENTS.toLocaleString()} 
-            subtext="6 categories × 3 options" 
-            icon={Cpu} 
-            color="bg-blue-500"
-          />
-          <StatCard 
-            title="Target Fill Rate" 
-            value="99%" 
-            subtext="Base Stock Policy" 
-            icon={ShieldCheck} 
-            color="bg-emerald-500"
-          />
-          <StatCard 
-            title="Capital Saved" 
-            value={`$${(calculations.savings / 1000000).toFixed(2)}M`} 
-            subtext="By switching to Component Strategy" 
-            icon={Calculator} 
-            color="bg-orange-500"
-          />
-        </div>
-
-        {/* Comparison Section */}
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-          {/* Main Chart */}
-          <div className="lg:col-span-2 bg-white p-6 rounded-xl shadow-sm border border-slate-100">
-            <h2 className="text-lg font-bold text-slate-900 mb-6">Inventory Investment Comparison ($)</h2>
-            <div className="h-80 w-full">
-              <ResponsiveContainer width="100%" height="100%">
-                <BarChart data={chartData} layout="vertical" margin={{ left: 40, right: 40 }}>
-                  <CartesianGrid strokeDasharray="3 3" horizontal={true} vertical={false} />
-                  <XAxis type="number" hide />
-                  <YAxis dataKey="name" type="category" width={150} />
-                  <Tooltip 
-                    formatter={(value) => `$${value.toLocaleString()}`}
-                    cursor={{fill: '#f8fafc'}}
-                  />
-                  <Legend />
-                  <Bar dataKey="Cycle Stock Value" stackId="a" fill="#3b82f6" radius={[0, 0, 0, 0]} />
-                  <Bar dataKey="Safety Stock Value" stackId="a" fill="#ef4444" radius={[0, 4, 4, 0]} />
-                </BarChart>
-              </ResponsiveContainer>
-            </div>
-            <div className="mt-4 p-4 bg-blue-50 rounded-lg text-sm text-blue-800 flex items-start gap-3">
-              <Info className="w-5 h-5 flex-shrink-0" />
-              <p>
-                The <strong>Component Strategy</strong> leverages the "Portfolio Effect." Since component demand aggregates demand from 243 different models, the relative uncertainty (standard deviation) drops significantly compared to the mean.
-              </p>
-            </div>
-          </div>
-
-          {/* Logic Breakdown */}
-          <div className="bg-white p-6 rounded-xl shadow-sm border border-slate-100 space-y-6">
-            <h2 className="text-lg font-bold text-slate-900">Why it works</h2>
-            
-            <div className="space-y-4">
-              <div className="flex items-center gap-4">
-                <div className="w-10 h-10 rounded-full bg-slate-100 flex items-center justify-center font-bold text-slate-600">1</div>
-                <div>
-                  <p className="font-bold text-sm">Reduced Stocking Units</p>
-                  <p className="text-xs text-slate-500">From 729 finished models down to 18 basic components.</p>
+        // 여기에 이미지에 있던 나머지 React 코드를 모두 붙여넣으세요.
+        const App = () => {
+            // ... (기존 Canvas 코드의 App 함수 내용)
+            return (
+                <div className="p-4">
+                    <h1 className="text-2xl font-bold">Inventory Strategy Analysis</h1>
+                    {/* ... 생략 ... */}
                 </div>
-              </div>
+            );
+        };
 
-              <div className="flex items-center gap-4">
-                <div className="w-10 h-10 rounded-full bg-slate-100 flex items-center justify-center font-bold text-slate-600">2</div>
-                <div>
-                  <p className="font-bold text-sm">Statistical Aggregation</p>
-                  <p className="text-xs text-slate-500">Comp. Std Dev ({calculations.sigma_lt_comp.toFixed(1)}) is much lower than 243 × Individual Std Dev ({243 * 5}).</p>
-                </div>
-              </div>
-
-              <div className="flex items-center gap-4">
-                <div className="w-10 h-10 rounded-full bg-slate-100 flex items-center justify-center font-bold text-slate-600">3</div>
-                <div>
-                  <p className="font-bold text-sm">Risk Pooling</p>
-                  <p className="text-xs text-slate-500">High demand in one PC model offsets low demand in another for the same shared component.</p>
-                </div>
-              </div>
-            </div>
-
-            <div className="pt-6 border-t border-slate-100">
-              <h3 className="text-sm font-bold text-slate-900 mb-3">Model Specifics</h3>
-              <div className="grid grid-cols-2 gap-2 text-xs">
-                <div className="p-2 bg-slate-50 rounded">
-                  <p className="text-slate-500">LT Demand/PC</p>
-                  <p className="font-bold">25 units</p>
-                </div>
-                <div className="p-2 bg-slate-50 rounded">
-                  <p className="text-slate-500">LT Demand/Comp</p>
-                  <p className="font-bold">6,075 units</p>
-                </div>
-                <div className="p-2 bg-slate-50 rounded">
-                  <p className="text-slate-500">Value per PC</p>
-                  <p className="font-bold">$900</p>
-                </div>
-                <div className="p-2 bg-slate-50 rounded">
-                  <p className="text-slate-500">Value per Comp</p>
-                  <p className="font-bold">$150</p>
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
-
-        {/* Detailed Data Table */}
-        <div className="bg-white rounded-xl shadow-sm border border-slate-100 overflow-hidden">
-          <div className="p-6 border-b border-slate-100">
-            <h2 className="text-lg font-bold text-slate-900">Comparative Analytics</h2>
-          </div>
-          <div className="overflow-x-auto">
-            <table className="w-full text-left">
-              <thead className="bg-slate-50 text-slate-500 text-xs uppercase tracking-wider">
-                <tr>
-                  <th className="px-6 py-4 font-semibold">Metric</th>
-                  <th className="px-6 py-4 font-semibold text-right">FGI Strategy</th>
-                  <th className="px-6 py-4 font-semibold text-right">Component Strategy</th>
-                  <th className="px-6 py-4 font-semibold text-right text-blue-600">Difference</th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-slate-100 text-sm">
-                <tr>
-                  <td className="px-6 py-4 font-medium">Distinct Items Managed</td>
-                  <td className="px-6 py-4 text-right">729 Models</td>
-                  <td className="px-6 py-4 text-right">18 Components</td>
-                  <td className="px-6 py-4 text-right text-slate-400">-97.5%</td>
-                </tr>
-                <tr>
-                  <td className="px-6 py-4 font-medium">Total Cycle Stock Units</td>
-                  <td className="px-6 py-4 text-right">18,225</td>
-                  <td className="px-6 py-4 text-right">109,350</td>
-                  <td className="px-6 py-4 text-right text-slate-400">+500% (Units)</td>
-                </tr>
-                <tr>
-                  <td className="px-6 py-4 font-medium">Total Safety Stock Units</td>
-                  <td className="px-6 py-4 text-right">{(calculations.fgi.ss).toLocaleString(undefined, {maximumFractionDigits: 0})}</td>
-                  <td className="px-6 py-4 text-right">{(calculations.ci.ss).toLocaleString(undefined, {maximumFractionDigits: 0})}</td>
-                  <td className="px-6 py-4 text-right text-emerald-600">-61.1%</td>
-                </tr>
-                <tr className="bg-blue-50/50">
-                  <td className="px-6 py-4 font-bold text-blue-900">Total Capital Investment</td>
-                  <td className="px-6 py-4 text-right font-bold">${(calculations.fgi.value / 1000).toLocaleString()}k</td>
-                  <td className="px-6 py-4 text-right font-bold">${(calculations.ci.value / 1000).toLocaleString()}k</td>
-                  <td className="px-6 py-4 text-right font-bold text-emerald-600">-${(calculations.savings / 1000).toLocaleString()}k</td>
-                </tr>
-              </tbody>
-            </table>
-          </div>
-        </div>
-      </div>
-    </div>
-  );
-};
-
-export default App;
+        const root = ReactDOM.createRoot(document.getElementById('root'));
+        root.render(<App />);
+    </script>
+</body>
+</html>
