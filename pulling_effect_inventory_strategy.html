@@ -16,29 +16,26 @@
     <div id="root"></div>
 
     <script type="text/babel">
-        // 전역 객체에서 컴포넌트 추출
         const { useState, useMemo } = React;
         const { 
-            BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer, Cell, PieChart, Pie 
+            BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer 
         } = Recharts;
         const { 
-            Box, Package, Cpu, ArrowRightLeft, TrendingDown, Info, Calculator, ShieldCheck 
+            Package, Cpu, TrendingDown, Info, Calculator, ShieldCheck 
         } = LucideReact;
 
         const App = () => {
-            // Constants from the scenario
             const NUM_CATEGORIES = 6;
             const OPTIONS_PER_CAT = 3;
-            const TOTAL_MODELS = Math.pow(OPTIONS_PER_CAT, NUM_CATEGORIES); // 729
-            const TOTAL_COMPONENTS = NUM_CATEGORIES * OPTIONS_PER_CAT; // 18
+            const TOTAL_MODELS = Math.pow(OPTIONS_PER_CAT, NUM_CATEGORIES); 
+            const TOTAL_COMPONENTS = NUM_CATEGORIES * OPTIONS_PER_CAT; 
             const COST_PER_COMP = 150;
-            const COST_PER_PC = COST_PER_COMP * NUM_CATEGORIES; // 900
+            const COST_PER_PC = COST_PER_COMP * NUM_CATEGORIES; 
             const MEAN_DEMAND_PC = 100;
             const STD_DEV_PC = 10;
-            const LEAD_TIME = 0.25; // 3 months = 1/4 year
-            const Z_SCORE = 2.33; // Approx for 99% service level
+            const LEAD_TIME = 0.25; 
+            const Z_SCORE = 2.33; 
 
-            // Calculations
             const calculations = useMemo(() => {
                 const theta_pc = MEAN_DEMAND_PC * LEAD_TIME;
                 const sigma_lt_pc = STD_DEV_PC * Math.sqrt(LEAD_TIME);
@@ -62,24 +59,13 @@
                 return {
                     fgi: { units: total_units_fgi, value: total_value_fgi, ss: ss_per_pc * TOTAL_MODELS, cycle: theta_pc * TOTAL_MODELS },
                     ci: { units: total_units_ci, value: total_value_ci, ss: ss_per_comp * TOTAL_COMPONENTS, cycle: theta_comp * TOTAL_COMPONENTS },
-                    savings,
-                    percent_reduction,
-                    sigma_lt_pc,
-                    sigma_lt_comp
+                    savings, percent_reduction, sigma_lt_pc, sigma_lt_comp
                 };
             }, []);
 
             const chartData = [
-                {
-                    name: 'Finished Goods (FGI)',
-                    'Cycle Stock Value': Math.round(calculations.fgi.cycle * COST_PER_PC),
-                    'Safety Stock Value': Math.round(calculations.fgi.ss * COST_PER_PC),
-                },
-                {
-                    name: 'Component (ATO)',
-                    'Cycle Stock Value': Math.round(calculations.ci.cycle * COST_PER_COMP),
-                    'Safety Stock Value': Math.round(calculations.ci.ss * COST_PER_COMP),
-                }
+                { name: 'Finished Goods (FGI)', 'Cycle Stock Value': Math.round(calculations.fgi.cycle * COST_PER_PC), 'Safety Stock Value': Math.round(calculations.fgi.ss * COST_PER_PC) },
+                { name: 'Component (ATO)', 'Cycle Stock Value': Math.round(calculations.ci.cycle * COST_PER_COMP), 'Safety Stock Value': Math.round(calculations.ci.ss * COST_PER_COMP) }
             ];
 
             const StatCard = ({ title, value, subtext, icon: Icon, color }) => (
@@ -170,40 +156,4 @@
                                         <tr>
                                             <th className="px-6 py-4 font-semibold">Metric</th>
                                             <th className="px-6 py-4 font-semibold text-right">FGI Strategy</th>
-                                            <th className="px-6 py-4 font-semibold text-right">Component Strategy</th>
-                                            <th className="px-6 py-4 font-semibold text-right text-blue-600">Difference</th>
-                                        </tr>
-                                    </thead>
-                                    <tbody className="divide-y divide-slate-100 text-sm">
-                                        <tr>
-                                            <td className="px-6 py-4 font-medium">Distinct Items Managed</td>
-                                            <td className="px-6 py-4 text-right">729 Models</td>
-                                            <td className="px-6 py-4 text-right">18 Components</td>
-                                            <td className="px-6 py-4 text-right text-slate-400">-97.5%</td>
-                                        </tr>
-                                        <tr>
-                                            <td className="px-6 py-4 font-medium">Total Safety Stock Units</td>
-                                            <td className="px-6 py-4 text-right">{(calculations.fgi.ss).toLocaleString(undefined, {maximumFractionDigits: 0})}</td>
-                                            <td className="px-6 py-4 text-right">{(calculations.ci.ss).toLocaleString(undefined, {maximumFractionDigits: 0})}</td>
-                                            <td className="px-6 py-4 text-right text-emerald-600">-61.1%</td>
-                                        </tr>
-                                        <tr className="bg-blue-50/50 font-bold">
-                                            <td className="px-6 py-4 text-blue-900">Total Capital Investment</td>
-                                            <td className="px-6 py-4 text-right">${(calculations.fgi.value / 1000).toLocaleString()}k</td>
-                                            <td className="px-6 py-4 text-right">${(calculations.ci.value / 1000).toLocaleString()}k</td>
-                                            <td className="px-6 py-4 text-right text-emerald-600">-${(calculations.savings / 1000).toLocaleString()}k</td>
-                                        </tr>
-                                    </tbody>
-                                </table>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            );
-        };
-
-        const root = ReactDOM.createRoot(document.getElementById('root'));
-        root.render(<App />);
-    </script>
-</body>
-</html>
+                                            <th className="px-6 py
