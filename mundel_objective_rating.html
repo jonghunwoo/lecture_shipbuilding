@@ -1,0 +1,108 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Mundel’s Objective Rating (Mundel's Objective Rating) 계산기</title>
+    <style>
+        body { font-family: 'Malgun Gothic', sans-serif; background-color: #f0f4f8; color: #333; padding: 20px; }
+        .container { max-width: 600px; margin: 0 auto; background: #fff; padding: 30px; border-radius: 12px; box-shadow: 0 8px 16px rgba(0,0,0,0.1); }
+        h1 { font-size: 22px; color: #2c3e50; border-bottom: 3px solid #3498db; padding-bottom: 10px; margin-bottom: 25px; text-align: center; }
+        .formula-box { background: #f8f9fa; padding: 15px; border-radius: 8px; text-align: center; font-style: italic; margin-bottom: 25px; border: 1px solid #dee2e6; }
+        .form-group { margin-bottom: 18px; }
+        .form-group label { display: block; margin-bottom: 8px; font-weight: bold; color: #444; }
+        .form-group input, .form-group select { width: 100%; padding: 12px; border: 1px solid #ccc; border-radius: 6px; box-sizing: border-box; font-size: 15px; }
+        .result-card { background: #2c3e50; color: #fff; padding: 25px; border-radius: 10px; margin-top: 30px; text-align: center; }
+        .result-title { font-size: 18px; color: #bdc3c7; margin-bottom: 10px; }
+        .result-value { font-size: 32px; font-weight: bold; color: #f1c40f; }
+        .details { font-size: 14px; margin-top: 10px; color: #ecf0f1; }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <h1>문델의 객관적 레이팅 계산기</h1>
+    
+    <div class="formula-box">
+        정미 시간 (NT) = 관측 시간 (O) × 속도 계수 (P) × 2차 조정 계수 (S)
+    </div>
+
+    <div class="form-group">
+        <label>관측 시간 (O) - 분 단위:</label>
+        <input type="number" id="obsTime" value="12" step="0.1" oninput="calculate()">
+    </div>
+
+    <div class="form-group">
+        <label>속도 평가 계수 (P) - %:</label>
+        <input type="number" id="paceRating" value="100" oninput="calculate()">
+    </div>
+
+    <div class="form-group">
+        <label>1. 사용 신체 부위 (신체적 조건):</label>
+        <select id="s1" onchange="calculate()">
+            <option value="0">손가락/손목만 사용 (0%)</option>
+            <option value="0.02">팔뚝 사용 (2%)</option>
+            <option value="0.05" selected>전체 팔/어깨 사용 (5%)</option>
+            <option value="0.08">몸통 전체 사용 (8%)</option>
+        </select>
+    </div>
+
+    <div class="form-group">
+        <label>2. 눈-손 협응 (시각적 주의력):</label>
+        <select id="s2" onchange="calculate()">
+            <option value="0">거친 작업 (0%)</option>
+            <option value="0.02">중간 정도의 주의력 (2%)</option>
+            <option value="0.04" selected>지속적이고 밀접한 주의 (4%)</option>
+            <option value="0.07">현미경 수준의 정밀도 (7%)</option>
+        </select>
+    </div>
+
+    <div class="form-group">
+        <label>3. 취급 요건 (조심성):</label>
+        <select id="s3" onchange="calculate()">
+            <option value="0">다루기 쉬움 (0%)</option>
+            <option value="0.01">약간의 조심성 요함 (1%)</option>
+            <option value="0.03" selected>다루기 까다로움/뻣뻣함 (3%)</option>
+            <option value="0.05">매우 깨지기 쉬움/위험함 (5%)</option>
+        </select>
+    </div>
+
+    <div class="form-group">
+        <label>4. 중량 및 저항:</label>
+        <select id="s4" onchange="calculate()">
+            <option value="0">1kg 미만 (0%)</option>
+            <option value="0.03">1~3kg (3%)</option>
+            <option value="0.07">3~5kg (7%)</option>
+            <option value="0.11" selected>5~10kg (11%)</option>
+            <option value="0.15">10kg 이상 (15%)</option>
+        </select>
+    </div>
+
+    <div class="result-card">
+        <div class="result-title">최종 정미 시간 (NT)</div>
+        <div class="result-value" id="ntDisplay">15.00 분</div>
+        <div class="details" id="sDetail">총 곤란성 보정(S): 25%</div>
+    </div>
+</div>
+
+<script>
+    function calculate() {
+        const o = parseFloat(document.getElementById('obsTime').value) || 0;
+        const p = (parseFloat(document.getElementById('paceRating').value) || 0) / 100;
+        
+        const s1 = parseFloat(document.getElementById('s1').value);
+        const s2 = parseFloat(document.getElementById('s2').value);
+        const s3 = parseFloat(document.getElementById('s3').value);
+        const s4 = parseFloat(document.getElementById('s4').value);
+        
+        const sTotal = 1 + (s1 + s2 + s3 + s4);
+        const nt = o * p * sTotal;
+        
+        document.getElementById('ntDisplay').innerText = nt.toFixed(2) + " 분";
+        document.getElementById('sDetail').innerText = "총 곤란성 보정(S 계수): " + ((sTotal - 1) * 100).toFixed(0) + "%";
+    }
+    window.onload = calculate;
+</script>
+
+</body>
+</html>
