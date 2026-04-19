@@ -1,97 +1,333 @@
-<!DOCTYPE html>
-<html lang="ko">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>생산관리 방법론의 발전 - 선박해양 생산공학</title>
-    <script src="https://polyfill.io/v3/polyfill.min.js?features=es6"></script>
-    <script id="MathJax-script" async src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
-    <style>
-        /* 미니멀리스트 타이포그래피 및 레이아웃 */
-        :root {
-            --bg-color: #ffffff;
-            --text-color: #1d1d1f;
-            --secondary-text: #86868b;
-            --accent-color: #0066cc;
-            --border-color: #e5e5ea;
-        }
-        body {
-            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
-            line-height: 1.6;
-            color: var(--text-color);
-            background-color: var(--bg-color);
-            max-width: 800px;
-            margin: 0 auto;
-            padding: 40px 20px;
-            -webkit-font-smoothing: antialiased;
-        }
-        header {
-            margin-bottom: 50px;
-            border-bottom: 1px solid var(--border-color);
-            padding-bottom: 20px;
-        }
-        h1 { font-size: 2.5rem; font-weight: 700; letter-spacing: -0.02em; margin-bottom: 10px; }
-        h2 { font-size: 1.5rem; font-weight: 600; margin-top: 40px; border-bottom: 1px solid var(--border-color); padding-bottom: 10px; }
-        h3 { font-size: 1.2rem; font-weight: 600; margin-top: 30px; }
-        p, li { font-size: 1.05rem; color: #333; }
-        .subtitle { color: var(--secondary-text); font-size: 1.1rem; margin-top: 0; }
-        .math-box { background: #f5f5f7; padding: 15px; border-radius: 8px; margin: 20px 0; overflow-x: auto; }
-        table { width: 100%; border-collapse: collapse; margin: 30px 0; }
-        th, td { padding: 12px; text-align: left; border-bottom: 1px solid var(--border-color); }
-        th { font-weight: 600; background-color: #f5f5f7; }
-    </style>
-</head>
-<body>
+import React, { useState } from 'react';
+import { 
+  Calculator, 
+  Boxes, 
+  RefreshCcw, 
+  Factory, 
+  Building2, 
+  ArrowRight,
+  Database,
+  Users,
+  Settings,
+  TrendingUp,
+  PackageOpen,
+  CheckCircle2,
+  AlertCircle
+} from 'lucide-react';
 
-    <header>
-        <h1>생산 계획 및 제어 시스템의 발전</h1>
-        <p class="subtitle">선박해양 생산공학 (Production Engineering for Shipbuilding)</p>
-    </header>
+export default function App() {
+  const [activeStage, setActiveStage] = useState(null);
 
-    <main>
-        <section>
-            <h2>1. 시스템 경계의 확장 (ROP에서 ERP까지)</h2>
-            <p>단순한 재고 보충 모델에서 전사적 자원 최적화로 넘어가는 공학적 맥락은 다음과 같습니다.</p>
-            
-            <h3>통계적 추정에서 결정론적 연산으로 (ROP → MRP)</h3>
-            <p>초기 <strong>ROP(재발주점)</strong>는 부품 수요가 독립적이라는 가정하에 리드타임과 수요량을 기반으로 통계적 안전재고를 유지하는 국지적 제어 방식입니다.</p>
-            <div class="math-box">
-                $$ ROP = Safety\_Stock + (Lead\_Time \times Average\_Demand) $$
+  const stages = [
+    {
+      id: 1,
+      shortName: "ROP",
+      title: "초기 자재 관리 (재발주점)",
+      subtitle: "Reorder Point",
+      color: "from-slate-500 to-slate-700",
+      iconBg: "bg-slate-600",
+      icon: <Calculator size={24} />,
+      description: "초기 생산관리의 핵심. 필요한 자재를 끊기지 않게 유지하는 것에 초점을 맞췄습니다.",
+      content: (
+        <div className="space-y-4">
+          <p className="text-sm text-gray-700 font-medium">
+            재고 수준이 미리 정해진 특정 시점(발주점)에 도달하면 일정한 오더 수량을 발주하는 방식
+          </p>
+          <div className="bg-slate-50 p-4 rounded-lg border border-slate-100 shadow-inner">
+            <h4 className="text-xs font-bold text-slate-500 mb-2 uppercase">수학적 모델</h4>
+            <div className="text-center font-mono text-sm md:text-base font-semibold text-slate-800 bg-white py-2 rounded shadow-sm border border-slate-200">
+              발주점(ROP) = 안전재고 + (리드타임 × 평균 수요량)
             </div>
-            <p>반면 <strong>MRP</strong>는 제품 구성의 종속성을 나타내는 <strong>BOM</strong>을 도입하여, 최종 제품 수요가 결정되면 산하 자재들의 소요량과 시기가 수학적으로 정확히 역산되는 결정론적 알고리즘입니다.</p>
-
-            <h3>피드백 제어와 자원 제약 (Closed Loop → MRP II)</h3>
-            <p>초기 MRP는 용량이 무한하다는 가정하에 작동하는 개방형 루프였습니다. 여기에 실행 가능성을 검토하는 피드백 루프가 추가되며 동적 제어가 가능한 <strong>Closed Loop MRP</strong>가 되었습니다. 이후 작업 인원, 병목 공정 등 물리적 리소스를 RCCP와 CRP 형태로 모델링한 <strong>MRP II</strong>로 발전하며 제약 기반 스케줄링의 형태를 갖춥니다.</p>
-        </section>
-
-        <section>
-            <h2>2. NP-Hard 문제 해결을 위한 계층적 분해 (Hierarchical Planning)</h2>
-            <p>전체 공장의 자원과 일정을 한 번에 최적화하는 것은 계산 복잡도가 극도로 높습니다. 따라서 시간 축과 상세도에 따라 계획을 분리하여 해결합니다.</p>
+          </div>
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+            <div className="bg-white p-3 rounded border border-slate-100 flex items-start space-x-2">
+              <AlertCircle className="text-amber-500 shrink-0 mt-0.5" size={16} />
+              <div>
+                <span className="block text-xs font-bold text-slate-700">안전재고</span>
+                <span className="text-xs text-gray-500">수요 변동/지연 대비 최소 유지 재고</span>
+              </div>
+            </div>
+            <div className="bg-white p-3 rounded border border-slate-100 flex items-start space-x-2">
+              <TrendingUp className="text-blue-500 shrink-0 mt-0.5" size={16} />
+              <div>
+                <span className="block text-xs font-bold text-slate-700">리드타임</span>
+                <span className="text-xs text-gray-500">발주 후 자재 도착까지 걸리는 시간</span>
+              </div>
+            </div>
+            <div className="bg-white p-3 rounded border border-slate-100 flex items-start space-x-2">
+              <PackageOpen className="text-emerald-500 shrink-0 mt-0.5" size={16} />
+              <div>
+                <span className="block text-xs font-bold text-slate-700">오더 수량</span>
+                <span className="text-xs text-gray-500">한 번 발주할 때 주문하는 고정된 양</span>
+              </div>
+            </div>
+          </div>
+        </div>
+      )
+    },
+    {
+      id: 2,
+      shortName: "MRP",
+      title: "자재 중심 계획",
+      subtitle: "Material Requirement Planning",
+      color: "from-blue-500 to-blue-700",
+      iconBg: "bg-blue-600",
+      icon: <Boxes size={24} />,
+      description: "단순히 재고를 채우는 것을 넘어, 제품 생산 일정에 맞춰 '무엇이, 언제, 얼마나' 필요한지 계산하는 시스템입니다.",
+      content: (
+        <div className="space-y-4">
+          <p className="text-sm text-gray-700 font-medium">
+            기준생산계획(MPS)을 바탕으로 자재 수급 계획을 연산합니다.
+          </p>
+          <div className="bg-blue-50 p-4 rounded-lg border border-blue-100">
+            <h4 className="text-xs font-bold text-blue-600 mb-3 uppercase text-center">MRP의 3대 입력 데이터 & 산출물</h4>
             
-            <table>
-                <tr>
-                    <th>단계</th>
-                    <th>계획 명칭</th>
-                    <th>공학적 역할</th>
-                </tr>
-                <tr>
-                    <td>전술적 단계</td>
-                    <td><strong>APP (총괄생산계획)</strong></td>
-                    <td>수요예측과 장기적 생산능력 매칭, 거시적 생산률 결정</td>
-                </tr>
-                <tr>
-                    <td>운영적 단계</td>
-                    <td><strong>MPS (주일정계획)</strong></td>
-                    <td>거시적 결과를 완제품 단위의 생산 일정으로 분해 (하위 MRP의 경계 조건)</td>
-                </tr>
-                <tr>
-                    <td>실행 단계</td>
-                    <td><strong>MRP / 일정계획</strong></td>
-                    <td>BOM과 WBS를 기반으로 미시적 단위의 자재 조달 및 스케줄링 연산</td>
-                </tr>
-            </table>
-        </section>
-    </main>
+            <div className="flex flex-col md:flex-row items-center justify-between gap-4">
+              <div className="space-y-2 w-full md:w-5/12">
+                <div className="flex items-center p-2 bg-white rounded shadow-sm text-xs">
+                  <span className="font-bold text-blue-700 w-12">MPS</span>
+                  <span className="text-gray-600">최종 제품 생산 수량/시기 계획</span>
+                </div>
+                <div className="flex items-center p-2 bg-white rounded shadow-sm text-xs">
+                  <span className="font-bold text-blue-700 w-12">BOM</span>
+                  <span className="text-gray-600">제품 부품 구성표</span>
+                </div>
+                <div className="flex items-center p-2 bg-white rounded shadow-sm text-xs">
+                  <span className="font-bold text-blue-700 w-12">Inv.</span>
+                  <span className="text-gray-600">가용 가능한 재고 정보</span>
+                </div>
+              </div>
+              
+              <div className="hidden md:flex flex-col items-center text-blue-400">
+                <ArrowRight size={24} />
+                <Settings size={20} className="animate-spin-slow my-1" />
+                <ArrowRight size={24} />
+              </div>
+              
+              <div className="w-full md:w-5/12 bg-white p-3 rounded-lg shadow-sm border border-blue-200 text-center h-full flex flex-col justify-center">
+                <span className="block font-bold text-slate-800 text-sm mb-1">산출물</span>
+                <span className="text-xs text-gray-600">구매 계획 & 생산 계획 도출<br/>(실행 및 제조 단계 전달)</span>
+              </div>
+            </div>
+          </div>
+        </div>
+      )
+    },
+    {
+      id: 3,
+      shortName: "Closed Loop",
+      title: "피드백의 도입",
+      subtitle: "Closed Loop MRP",
+      color: "from-indigo-500 to-indigo-700",
+      iconBg: "bg-indigo-600",
+      icon: <RefreshCcw size={24} />,
+      description: "초기 MRP의 실현 가능성 검토 기능 부족을 보완하기 위해 피드백 루프가 추가되었습니다.",
+      content: (
+        <div className="space-y-4">
+          <p className="text-sm text-gray-700 font-medium">
+            생산 계획대로 진행이 가능한지 지속적으로 검토하고, 문제 발생 시 계획을 변경하는 프로세스입니다.
+          </p>
+          <div className="bg-indigo-50 p-5 rounded-lg border border-indigo-100 text-center relative overflow-hidden">
+            <h4 className="text-xs font-bold text-indigo-600 mb-4 uppercase">핵심 프로세스 루프</h4>
+            
+            <div className="flex flex-col md:flex-row items-center justify-center gap-2 md:gap-4 relative z-10">
+              <div className="bg-white px-4 py-2 rounded-full shadow border border-indigo-200 text-sm font-bold text-slate-700">
+                1. 계획 수립
+              </div>
+              <ArrowRight className="text-indigo-400 rotate-90 md:rotate-0 my-1 md:my-0" size={20} />
+              
+              <div className="bg-indigo-600 text-white px-4 py-2 rounded-full shadow text-sm font-bold flex items-center gap-2">
+                <RefreshCcw size={16} />
+                2. 실행 가능 여부 체크
+              </div>
+              <ArrowRight className="text-indigo-400 rotate-90 md:rotate-0 my-1 md:my-0" size={20} />
+              
+              <div className="flex flex-row md:flex-col gap-2">
+                <div className="bg-white px-3 py-1.5 rounded-full shadow border border-red-200 text-xs font-bold text-red-600 flex items-center gap-1">
+                  불가능(NO) ➔ 계획 수정
+                </div>
+                <div className="bg-white px-3 py-1.5 rounded-full shadow border border-emerald-200 text-xs font-bold text-emerald-600 flex items-center gap-1">
+                  가능(YES) ➔ 실행
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      )
+    },
+    {
+      id: 4,
+      shortName: "MRP II",
+      title: "제조 자원 통합 관리",
+      subtitle: "Manufacturing Resource Planning",
+      color: "from-purple-500 to-purple-700",
+      iconBg: "bg-purple-600",
+      icon: <Factory size={24} />,
+      description: "MRP가 자재에 집중했다면, 인적 자원과 설비 능력까지 관리 범위를 넓혔습니다.",
+      content: (
+        <div className="space-y-4">
+          <p className="text-sm text-gray-700 font-medium">
+            수립된 계획의 실현 가능성을 용량(Capacity) 측면에서 검토하는 절차가 추가되었습니다.
+          </p>
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <div className="bg-purple-50 p-4 rounded-lg border border-purple-100">
+              <div className="flex items-center gap-2 mb-2">
+                <div className="bg-purple-200 p-1.5 rounded text-purple-700">
+                  <Database size={18} />
+                </div>
+                <h4 className="font-bold text-purple-800 text-sm">RCCP</h4>
+              </div>
+              <p className="text-xs text-purple-600 font-semibold mb-1">Rough Cut Capacity Planning</p>
+              <p className="text-xs text-gray-600 mt-2 border-t border-purple-100 pt-2">
+                주요 병목 공정, 작업 인원, 주요 설비 등을 개략적으로 점검하여 큰 틀의 실현 가능성을 파악합니다.
+              </p>
+            </div>
+            
+            <div className="bg-purple-50 p-4 rounded-lg border border-purple-100">
+              <div className="flex items-center gap-2 mb-2">
+                <div className="bg-purple-200 p-1.5 rounded text-purple-700">
+                  <Users size={18} />
+                </div>
+                <h4 className="font-bold text-purple-800 text-sm">CRP</h4>
+              </div>
+              <p className="text-xs text-purple-600 font-semibold mb-1">Capacity Requirements Planning</p>
+              <p className="text-xs text-gray-600 mt-2 border-t border-purple-100 pt-2">
+                보다 구체적인 생산 리소스의 능력 소요 계획을 수립하고 상세 우선순위를 조정합니다.
+              </p>
+            </div>
+          </div>
+        </div>
+      )
+    },
+    {
+      id: 5,
+      shortName: "ERP",
+      title: "전사적 자원 관리",
+      subtitle: "Enterprise Resource Planning",
+      color: "from-teal-500 to-teal-700",
+      iconBg: "bg-teal-600",
+      icon: <Building2 size={24} />,
+      description: "제조를 넘어 영업, 회계, 인사 등 기업의 모든 데이터를 통합 관리하는 현대적인 시스템입니다.",
+      content: (
+        <div className="space-y-4">
+          <p className="text-sm text-gray-700 font-medium">
+            수주부터 제품 출하, 수금까지의 전 라이프사이클과 원가를 자동으로 계산하여 회계에 반영합니다.
+          </p>
+          <div className="bg-teal-50 p-4 rounded-lg border border-teal-100">
+            <h4 className="text-xs font-bold text-teal-600 mb-3 uppercase">주요 특징</h4>
+            <ul className="space-y-3">
+              <li className="flex items-start gap-2">
+                <CheckCircle2 className="text-teal-500 shrink-0 mt-0.5" size={16} />
+                <div>
+                  <span className="text-sm font-bold text-slate-800 block">통합성 (Integration)</span>
+                  <span className="text-xs text-gray-600">고객, 협력사(상/하위 공급 체계) 및 내부 연관 부서(설계, 영업, 원가회계) 업무 동시 고려</span>
+                </div>
+              </li>
+              <li className="flex items-start gap-2">
+                <CheckCircle2 className="text-teal-500 shrink-0 mt-0.5" size={16} />
+                <div>
+                  <span className="text-sm font-bold text-slate-800 block">기술적 진보 (Technology)</span>
+                  <span className="text-xs text-gray-600">분산 데이터 처리, 개방형 구조를 통한 유연성 극대화</span>
+                </div>
+              </li>
+              <li className="flex items-start gap-2">
+                <CheckCircle2 className="text-teal-500 shrink-0 mt-0.5" size={16} />
+                <div>
+                  <span className="text-sm font-bold text-slate-800 block">최고 경영자 지원 (Executive Support)</span>
+                  <span className="text-xs text-gray-600">시뮬레이션 및 ABC 원가 계산을 통해 자금 흐름과 기업 정보를 예측, 관리 효율성 증대</span>
+                </div>
+              </li>
+            </ul>
+          </div>
+        </div>
+      )
+    }
+  ];
 
-</body>
-</html>
+  return (
+    <div className="min-h-screen bg-slate-50 font-sans pb-16">
+      {/* Header */}
+      <header className="bg-slate-900 text-white py-12 px-6 shadow-md relative overflow-hidden">
+        <div className="absolute top-0 right-0 -mr-20 -mt-20 opacity-10">
+          <Building2 size={300} />
+        </div>
+        <div className="max-w-4xl mx-auto relative z-10">
+          <h1 className="text-3xl md:text-4xl font-extrabold mb-3 tracking-tight">생산 및 자원 관리 시스템의 진화</h1>
+          <p className="text-slate-300 max-w-2xl text-base md:text-lg">
+            단순 자재 재주문(ROP)에서 시작하여 기업 전체의 자원을 통합 관리하는 ERP로 발전하기까지의 역사와 핵심 개념을 시각적으로 확인해보세요.
+          </p>
+        </div>
+      </header>
+
+      {/* Timeline Section */}
+      <main className="max-w-4xl mx-auto px-4 md:px-6 pt-12">
+        <div className="relative">
+          {/* Vertical Line */}
+          <div className="absolute left-6 md:left-12 top-0 bottom-0 w-1 bg-slate-200 rounded-full" />
+
+          <div className="space-y-12 relative z-10">
+            {stages.map((stage, index) => {
+              const isActive = activeStage === stage.id;
+              
+              return (
+                <div 
+                  key={stage.id} 
+                  className="relative flex items-start group"
+                  onMouseEnter={() => setActiveStage(stage.id)}
+                  onMouseLeave={() => setActiveStage(null)}
+                >
+                  {/* Timeline Dot & Icon */}
+                  <div className={`
+                    absolute left-0 md:left-6 -ml-6 w-12 h-12 md:w-14 md:h-14 
+                    rounded-full flex items-center justify-center text-white 
+                    border-4 border-slate-50 shadow-md z-20 transition-transform duration-300
+                    ${stage.iconBg}
+                    ${isActive ? 'scale-110 shadow-lg' : ''}
+                  `}>
+                    {stage.icon}
+                  </div>
+
+                  {/* Content Card */}
+                  <div className="ml-16 md:ml-28 w-full">
+                    <div className={`
+                      bg-white rounded-xl shadow-sm border border-slate-100 overflow-hidden
+                      transition-all duration-300 ease-in-out
+                      ${isActive ? 'shadow-xl -translate-y-1 border-slate-200' : 'hover:shadow-md'}
+                    `}>
+                      {/* Card Header */}
+                      <div className={`p-5 md:p-6 bg-gradient-to-r ${stage.color} text-white`}>
+                        <div className="flex justify-between items-center mb-1">
+                          <span className="px-2.5 py-1 bg-white/20 rounded-full text-xs font-bold uppercase tracking-wider">
+                            Stage {index + 1}
+                          </span>
+                          <span className="font-mono text-sm opacity-80">{stage.shortName}</span>
+                        </div>
+                        <h2 className="text-xl md:text-2xl font-bold mt-2">{stage.title}</h2>
+                        <h3 className="text-white/80 font-medium text-sm md:text-base">{stage.subtitle}</h3>
+                      </div>
+                      
+                      {/* Card Body */}
+                      <div className="p-5 md:p-6">
+                        <p className="text-slate-600 mb-6 font-medium leading-relaxed">
+                          {stage.description}
+                        </p>
+                        
+                        {/* Detailed Content */}
+                        <div className={`
+                          transition-all duration-500 ease-in-out
+                          ${isActive ? 'opacity-100 max-h-[1000px]' : 'opacity-80 max-h-[1000px] md:opacity-100'}
+                        `}>
+                          {stage.content}
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        </div>
+      </main>
+    </div>
+  );
+}
