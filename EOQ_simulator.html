@@ -6,7 +6,6 @@
     <title>경제적 주문량(EOQ) 비용 곡선 시뮬레이터</title>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <style>
-        /* 미니멀리스트 디자인 (macOS 스타일) */
         :root {
             --bg-color: #f5f5f7;
             --card-bg: #ffffff;
@@ -29,25 +28,6 @@
             border-radius: 16px;
             box-shadow: 0 4px 20px rgba(0,0,0,0.05);
         }
-        .controls {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
-            gap: 20px;
-            margin-bottom: 30px;
-            padding-bottom: 20px;
-            border-bottom: 1px solid var(--border-color);
-        }
-        .control-group label {
-            display: flex;
-            justify-content: space-between;
-            font-weight: 600;
-            margin-bottom: 8px;
-            font-size: 0.95rem;
-        }
-        input[type="range"] {
-            width: 100%;
-            accent-color: var(--accent-blue);
-        }
         .metrics {
             display: flex;
             justify-content: space-around;
@@ -59,7 +39,40 @@
         .metric-box { text-align: center; }
         .metric-title { font-size: 0.9rem; color: #555; margin-bottom: 5px; }
         .metric-value { font-size: 1.8rem; font-weight: 700; color: var(--accent-blue); }
-        .chart-container { position: relative; height: 400px; width: 100%; }
+        
+        .controls {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 20px;
+            margin-bottom: 30px;
+            padding-bottom: 20px;
+            border-bottom: 1px solid var(--border-color);
+        }
+        .control-group label {
+            display: block;
+            font-weight: 600;
+            margin-bottom: 8px;
+            font-size: 0.95rem;
+        }
+        /* 슬라이더와 입력창 나란히 배치 */
+        .input-wrapper {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+        input[type="range"] {
+            flex-grow: 1;
+            accent-color: var(--accent-blue);
+        }
+        input[type="number"] {
+            width: 70px;
+            padding: 6px;
+            font-size: 1rem;
+            border: 1px solid var(--border-color);
+            border-radius: 6px;
+            text-align: center;
+        }
+        .chart-container { position: relative; height: 450px; width: 100%; }
     </style>
 </head>
 <body>
@@ -84,16 +97,25 @@
 
         <div class="controls">
             <div class="control-group">
-                <label><span>연간 수요량 (D)</span> <span id="label-D">1200</span></label>
-                <input type="range" id="input-D" min="100" max="5000" step="10" value="1200">
+                <label>연간 수요량 (D)</label>
+                <div class="input-wrapper">
+                    <input type="range" id="slider-D" min="100" max="5000" step="10" value="1440">
+                    <input type="number" id="input-D" min="100" max="5000" step="10" value="1440">
+                </div>
             </div>
             <div class="control-group">
-                <label><span>작업준비 고정 비용 (A)</span> <span id="label-A">150</span></label>
-                <input type="range" id="input-A" min="10" max="1000" step="10" value="150">
+                <label>작업준비 고정 비용 (A)</label>
+                <div class="input-wrapper">
+                    <input type="range" id="slider-A" min="10" max="1000" step="10" value="140">
+                    <input type="number" id="input-A" min="10" max="1000" step="10" value="140">
+                </div>
             </div>
             <div class="control-group">
-                <label><span>단위당 재고 유지비용 (h)</span> <span id="label-h">10</span></label>
-                <input type="range" id="input-h" min="1" max="100" step="1" value="10">
+                <label>단위당 재고 유지비용 (h)</label>
+                <div class="input-wrapper">
+                    <input type="range" id="slider-h" min="1" max="100" step="1" value="28">
+                    <input type="number" id="input-h" min="1" max="100" step="1" value="28">
+                </div>
             </div>
         </div>
 
@@ -105,114 +127,148 @@
     <script>
         let costChart;
 
-        function calculateAndDraw() {
-            // 입력값 가져오기
-            const D = parseFloat(document.getElementById('input-D').value);
-            const A = parseFloat(document.getElementById('input-A').value);
-            const h = parseFloat(document.getElementById('input-h').value);
-
-            // 라벨 업데이트
-            document.getElementById('label-D').innerText = D.toLocaleString();
-            document.getElementById('label-A').innerText = A.toLocaleString();
-            document.getElementById('label-h').innerText = h.toLocaleString();
-
-            // EOQ 연산
-            const eoq = Math.sqrt((2 * D * A) / h);
-            const minTotalCost = (D / eoq) * A + (eoq / 2) * h;
-            const orders = D / eoq;
-
-            // 지표 업데이트
-            document.getElementById('val-eoq').innerText = eoq.toFixed(0) + " 개";
-            document.getElementById('val-tc').innerText = minTotalCost.toFixed(0) + " 원";
-            document.getElementById('val-orders').innerText = orders.toFixed(1) + " 회";
-
-            // 그래프용 데이터 배열 생성 (Q를 10부터 1000까지 변화시키며 비용 계산)
-            const qValues = [];
-            const holdingCosts = [];
-            const setupCosts = [];
-            const totalCosts = [];
-            const optimalPoint = [];
-
-            for (let q = 10; q <= 1000; q += 10) {
-                qValues.push(q);
-                holdingCosts.push((q / 2) * h);
-                setupCosts.push((D / q) * A);
-                totalCosts.push(((D / q) * A) + ((q / 2) * h));
-                
-                // 최적점(EOQ) 좌표 표시를 위한 데이터
-                if (Math.abs(q - Math.round(eoq)) <= 5) {
-                    optimalPoint.push({x: q, y: minTotalCost});
-                } else {
-                    optimalPoint.push(null);
-                }
-            }
-
-            // 차트 업데이트 로직
+        // 차트 초기화 (1회만 실행)
+        function initChart() {
             const ctx = document.getElementById('costChart').getContext('2d');
-            
-            if (costChart) {
-                costChart.destroy(); // 기존 차트 지우기
-            }
-
             costChart = new Chart(ctx, {
                 type: 'line',
                 data: {
-                    labels: qValues,
                     datasets: [
                         {
                             label: '총 비용 (Total Cost)',
-                            data: totalCosts,
+                            data: [],
                             borderColor: '#1d1d1f',
                             borderWidth: 3,
                             fill: false,
+                            pointRadius: 0, // 선 위의 자잘한 점 제거
                             tension: 0.4
                         },
                         {
                             label: '재고 유지 비용 (Holding Cost)',
-                            data: holdingCosts,
+                            data: [],
                             borderColor: '#34c759',
                             borderDash: [5, 5],
                             borderWidth: 2,
-                            fill: false
+                            fill: false,
+                            pointRadius: 0
                         },
                         {
                             label: '작업준비 비용 (Setup Cost)',
-                            data: setupCosts,
+                            data: [],
                             borderColor: '#ff3b30',
                             borderDash: [5, 5],
                             borderWidth: 2,
-                            fill: false
+                            fill: false,
+                            pointRadius: 0
                         },
                         {
                             label: '최적점 (EOQ)',
-                            data: optimalPoint,
+                            data: [],
                             backgroundColor: '#0066cc',
                             borderColor: '#0066cc',
-                            pointRadius: 6,
-                            pointHoverRadius: 8,
-                            showLine: false
+                            pointRadius: 8,       // 최적점만 크게 표시
+                            pointHoverRadius: 10,
+                            showLine: false,
+                            type: 'scatter'       // 이 데이터셋만 점으로 렌더링
                         }
                     ]
                 },
                 options: {
                     responsive: true,
                     maintainAspectRatio: false,
+                    animation: {
+                        duration: 400, // 부드러운 애니메이션 전환
+                        easing: 'easeOutQuart'
+                    },
+                    plugins: {
+                        legend: {
+                            labels: {
+                                usePointStyle: true, // 범례 아이콘을 원형(Dot)으로 변경
+                                pointStyle: 'circle'
+                            }
+                        }
+                    },
                     scales: {
-                        x: { title: { display: true, text: '로트 생산량 (Q)' } },
-                        y: { title: { display: true, text: '비용 (Cost)' }, min: 0 }
+                        x: { 
+                            type: 'linear', // x축을 단순 텍스트가 아닌 선형 수치 축으로 변경
+                            title: { display: true, text: '로트 생산량 (Q)' },
+                            min: 0
+                        },
+                        y: { 
+                            title: { display: true, text: '비용 (Cost)' }, 
+                            min: 0 
+                        }
                     },
                     interaction: { mode: 'index', intersect: false }
                 }
             });
         }
 
-        // 슬라이더 이벤트 리스너 등록
-        document.getElementById('input-D').addEventListener('input', calculateAndDraw);
-        document.getElementById('input-A').addEventListener('input', calculateAndDraw);
-        document.getElementById('input-h').addEventListener('input', calculateAndDraw);
+        // 데이터 연산 및 차트 업데이트
+        function calculateAndDraw() {
+            const D = parseFloat(document.getElementById('input-D').value) || 0;
+            const A = parseFloat(document.getElementById('input-A').value) || 0;
+            const h = parseFloat(document.getElementById('input-h').value) || 0;
 
-        // 초기 렌더링
+            if(h === 0 || D === 0) return; // 0으로 나누기 방지
+
+            const eoq = Math.sqrt((2 * D * A) / h);
+            const minTotalCost = (D / eoq) * A + (eoq / 2) * h;
+            const orders = D / eoq;
+
+            document.getElementById('val-eoq').innerText = eoq.toFixed(0) + " 개";
+            document.getElementById('val-tc').innerText = minTotalCost.toFixed(0) + " 원";
+            document.getElementById('val-orders').innerText = orders.toFixed(1) + " 회";
+
+            const holdingCosts = [];
+            const setupCosts = [];
+            const totalCosts = [];
+
+            // EOQ 값에 따라 그래프가 그려지는 X축의 최대 범위를 유동적으로 설정
+            const maxQ = Math.max(1000, Math.ceil(eoq * 2.5));
+            costChart.options.scales.x.max = maxQ;
+
+            for (let q = 10; q <= maxQ; q += 10) {
+                // {x, y} 좌표 형태로 데이터 생성
+                holdingCosts.push({x: q, y: (q / 2) * h});
+                setupCosts.push({x: q, y: (D / q) * A});
+                totalCosts.push({x: q, y: ((D / q) * A) + ((q / 2) * h)});
+            }
+
+            // 정확한 수학적 최적점 좌표 단 한 개만 배열에 넣음
+            const optimalPoint = [{x: eoq, y: minTotalCost}];
+
+            // 차트 데이터 객체 업데이트 (destroy 하지 않음)
+            costChart.data.datasets[0].data = totalCosts;
+            costChart.data.datasets[1].data = holdingCosts;
+            costChart.data.datasets[2].data = setupCosts;
+            costChart.data.datasets[3].data = optimalPoint;
+
+            costChart.update();
+        }
+
+        // 슬라이더와 숫자 입력창 동기화 유틸리티
+        function syncInputs(id) {
+            const slider = document.getElementById('slider-' + id);
+            const input = document.getElementById('input-' + id);
+            
+            slider.addEventListener('input', (e) => { 
+                input.value = e.target.value; 
+                calculateAndDraw(); 
+            });
+            input.addEventListener('input', (e) => { 
+                slider.value = e.target.value; 
+                calculateAndDraw(); 
+            });
+        }
+
+        // 초기화 및 이벤트 리스너 등록
+        initChart();
+        syncInputs('D');
+        syncInputs('A');
+        syncInputs('h');
         calculateAndDraw();
+
     </script>
 </body>
 </html>
