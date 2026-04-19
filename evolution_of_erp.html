@@ -1,0 +1,97 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>생산관리 방법론의 발전 - 선박해양 생산공학</title>
+    <script src="https://polyfill.io/v3/polyfill.min.js?features=es6"></script>
+    <script id="MathJax-script" async src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
+    <style>
+        /* 미니멀리스트 타이포그래피 및 레이아웃 */
+        :root {
+            --bg-color: #ffffff;
+            --text-color: #1d1d1f;
+            --secondary-text: #86868b;
+            --accent-color: #0066cc;
+            --border-color: #e5e5ea;
+        }
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+            line-height: 1.6;
+            color: var(--text-color);
+            background-color: var(--bg-color);
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 40px 20px;
+            -webkit-font-smoothing: antialiased;
+        }
+        header {
+            margin-bottom: 50px;
+            border-bottom: 1px solid var(--border-color);
+            padding-bottom: 20px;
+        }
+        h1 { font-size: 2.5rem; font-weight: 700; letter-spacing: -0.02em; margin-bottom: 10px; }
+        h2 { font-size: 1.5rem; font-weight: 600; margin-top: 40px; border-bottom: 1px solid var(--border-color); padding-bottom: 10px; }
+        h3 { font-size: 1.2rem; font-weight: 600; margin-top: 30px; }
+        p, li { font-size: 1.05rem; color: #333; }
+        .subtitle { color: var(--secondary-text); font-size: 1.1rem; margin-top: 0; }
+        .math-box { background: #f5f5f7; padding: 15px; border-radius: 8px; margin: 20px 0; overflow-x: auto; }
+        table { width: 100%; border-collapse: collapse; margin: 30px 0; }
+        th, td { padding: 12px; text-align: left; border-bottom: 1px solid var(--border-color); }
+        th { font-weight: 600; background-color: #f5f5f7; }
+    </style>
+</head>
+<body>
+
+    <header>
+        <h1>생산 계획 및 제어 시스템의 발전</h1>
+        <p class="subtitle">선박해양 생산공학 (Production Engineering for Shipbuilding)</p>
+    </header>
+
+    <main>
+        <section>
+            <h2>1. 시스템 경계의 확장 (ROP에서 ERP까지)</h2>
+            <p>단순한 재고 보충 모델에서 전사적 자원 최적화로 넘어가는 공학적 맥락은 다음과 같습니다.</p>
+            
+            <h3>통계적 추정에서 결정론적 연산으로 (ROP → MRP)</h3>
+            <p>초기 <strong>ROP(재발주점)</strong>는 부품 수요가 독립적이라는 가정하에 리드타임과 수요량을 기반으로 통계적 안전재고를 유지하는 국지적 제어 방식입니다.</p>
+            <div class="math-box">
+                $$ ROP = Safety\_Stock + (Lead\_Time \times Average\_Demand) $$
+            </div>
+            <p>반면 <strong>MRP</strong>는 제품 구성의 종속성을 나타내는 <strong>BOM</strong>을 도입하여, 최종 제품 수요가 결정되면 산하 자재들의 소요량과 시기가 수학적으로 정확히 역산되는 결정론적 알고리즘입니다.</p>
+
+            <h3>피드백 제어와 자원 제약 (Closed Loop → MRP II)</h3>
+            <p>초기 MRP는 용량이 무한하다는 가정하에 작동하는 개방형 루프였습니다. 여기에 실행 가능성을 검토하는 피드백 루프가 추가되며 동적 제어가 가능한 <strong>Closed Loop MRP</strong>가 되었습니다. 이후 작업 인원, 병목 공정 등 물리적 리소스를 RCCP와 CRP 형태로 모델링한 <strong>MRP II</strong>로 발전하며 제약 기반 스케줄링의 형태를 갖춥니다.</p>
+        </section>
+
+        <section>
+            <h2>2. NP-Hard 문제 해결을 위한 계층적 분해 (Hierarchical Planning)</h2>
+            <p>전체 공장의 자원과 일정을 한 번에 최적화하는 것은 계산 복잡도가 극도로 높습니다. 따라서 시간 축과 상세도에 따라 계획을 분리하여 해결합니다.</p>
+            
+            <table>
+                <tr>
+                    <th>단계</th>
+                    <th>계획 명칭</th>
+                    <th>공학적 역할</th>
+                </tr>
+                <tr>
+                    <td>전술적 단계</td>
+                    <td><strong>APP (총괄생산계획)</strong></td>
+                    <td>수요예측과 장기적 생산능력 매칭, 거시적 생산률 결정</td>
+                </tr>
+                <tr>
+                    <td>운영적 단계</td>
+                    <td><strong>MPS (주일정계획)</strong></td>
+                    <td>거시적 결과를 완제품 단위의 생산 일정으로 분해 (하위 MRP의 경계 조건)</td>
+                </tr>
+                <tr>
+                    <td>실행 단계</td>
+                    <td><strong>MRP / 일정계획</strong></td>
+                    <td>BOM과 WBS를 기반으로 미시적 단위의 자재 조달 및 스케줄링 연산</td>
+                </tr>
+            </table>
+        </section>
+    </main>
+
+</body>
+</html>
