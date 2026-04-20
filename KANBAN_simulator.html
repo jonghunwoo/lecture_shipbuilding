@@ -24,14 +24,13 @@
         
         button { padding: 12px 24px; font-size: 16px; font-weight: bold; cursor: pointer; background: #1e88e5; color: white; border: none; border-radius: 5px; box-shadow: 0 2px 4px rgba(0,0,0,0.2); }
         button:hover { background: #1565c0; }
-        button:active { transform: translateY(2px); box-shadow: none; }
         
-        /* 동적 객체 (부품 및 카드) */
-        .entity { position: absolute; transition: all 1s ease-in-out; display: flex; justify-content: center; align-items: center; font-weight: bold; z-index: 10; }
-        .part { width: 45px; height: 45px; background: #9e9e9e; border-radius: 4px; border: 2px solid #555; box-shadow: 2px 2px 5px rgba(0,0,0,0.3); }
-        .card { width: 25px; height: 35px; border-radius: 3px; color: white; font-size: 14px; box-shadow: 1px 1px 3px rgba(0,0,0,0.3); z-index: 11; }
-        .p-card { background: #e53935; border: 1px solid #b71c1c; }
-        .w-card { background: #1e88e5; border: 1px solid #0d47a1; }
+        /* 동적 객체 */
+        .entity { position: absolute; transition: all 1s ease-in-out; display: flex; justify-content: center; align-items: center; font-weight: bold; z-index: 10; border-radius: 4px; }
+        .part { width: 40px; height: 40px; background: #9e9e9e; border: 2px solid #555; color: white; font-size: 10px; }
+        .card { width: 30px; height: 20px; color: white; font-size: 11px; z-index: 11; }
+        .p-card { background: #e53935; border: 1px solid #b71c1c; } /* 생산칸반: 빨강 */
+        .w-card { background: #1e88e5; border: 1px solid #0d47a1; } /* 인수칸반: 파랑 */
         
         .stock-count { margin-top: auto; padding-bottom: 10px; font-size: 18px; color: #333; }
         #processing-text { font-size: 14px; color: #e53935; margin-top: 5px; }
@@ -51,21 +50,115 @@
         <div id="p-board" class="board">P-Kanban Board<br><span id="p-count">0</span>장</div>
         <div id="w-post" class="board">W-Kanban Post<br><span id="w-count">0</span>장</div>
         
-        <div id="log" class="log"></div>
+        <div id="log" class="log">시스템 준비 완료.</div>
     </div>
 
     <script>
-        // --- 상태 관리 ---
-        let state = {
-            supermarket: 5,
-            pBoard: 0,
-            wPost: 0,
-            isProcessing: false
-        };
-
+        let state = { supermarket: 5, pBoard: 0, wPost: 0, isProcessing: false };
         const container = document.getElementById('sim-container');
         const logBox = document.getElementById('log');
 
         function log(msg) {
             const time = new Date().toLocaleTimeString();
-            logBox.innerHTML +=
+            logBox.innerHTML = `[${time}] ${msg}<br>` + logBox.innerHTML;
+        }
+
+        function updateDisplay() {
+            document.getElementById('stock-display').innerText = `재고: ${state.supermarket}`;
+            document.getElementById('p-count').innerText = state.pBoard;
+            document.getElementById('w-count').innerText = state.wPost;
+        }
+
+        // 애니메이션용 요소 생성 함수
+        function createEntity(type, className, x, y, text) {
+            const el = document.createElement('div');
+            el.className = `entity ${type} ${className}`;
+            el.style.left = x + 'px';
+            el.style.top = y + 'px';
+            el.innerText = text;
+            container.appendChild(el);
+            return el;
+        }
+
+        async function triggerDemand() {
+            if (state.supermarket <= 0) {
+                log("<span style='color:red'>재고 없음! 생산을 기다리세요.</span>");
+                return;
+            }
+
+            // 1. 후속공정에서 부품 요청 (W-Card 발생)
+            log("후속 공정: 부품 1개 소비 시작");
+            state.supermarket--;
+            updateDisplay();
+
+            // 인수칸반(W)이 슈퍼마켓으로 이동
+            const wCard = createEntity('card', 'w-card', 650, 230, 'W');
+            await new Promise(r => setTimeout(r, 100));
+            wCard.style.left = '430px';
+            wCard.style.top = '100px';
+
+            // 2. 슈퍼마켓에서 부품이 나감
+            const part = createEntity('part', '', 430, 80, '📦');
+            setTimeout(() => {
+                part.style.left = '720px';
+                part.style.top = '80px';
+            }, 100);
+
+            // 3. 부품이 나가면서 P-Card 분리 및 Board로 이동
+            setTimeout(async () => {
+                log("인수 성공: P-Card가 생산 보드로 이동합니다.");
+                const pCard = createEntity('card', 'p-card', 400, 100, 'P');
+                pCard.style.left = '130px';
+                pCard.style.top = '240px';
+                
+                state.pBoard++;
+                updateDisplay();
+                
+                // 사용된 W-Card와 Part 제거 (도착 처리)
+                setTimeout(() => { 
+                    wCard.remove(); 
+                    part.remove();
+                    processUpstream(); // 생산 트리거
+                }, 1000);
+            }, 1000);
+        }
+
+        async function processUpstream() {
+            if (state.isProcessing || state.pBoard <= 0) return;
+
+            state.isProcessing = true;
+            state.pBoard--;
+            updateDisplay();
+            
+            document.getElementById('processing-text').innerText = "🔨 생산 중...";
+            log("선행 공정: 생산 시작 (1.5초 소요)");
+
+            await new Promise(r => setTimeout(r, 1500));
+
+            // 생산 완료된 부품이 슈퍼마켓으로 이동
+            const newPart = createEntity('part', '', 130, 80, '📦');
+            log("생산 완료: 부품을 슈퍼마켓에 입고합니다.");
+            
+            setTimeout(() => {
+                newPart.style.left = '430px';
+                newPart.style.top = '80px';
+                
+                setTimeout(() => {
+                    newPart.remove();
+                    state.supermarket++;
+                    state.isProcessing = false;
+                    document.getElementById('processing-text').innerText = "대기 중";
+                    updateDisplay();
+                    // 대기 중인 P-칸반이 있다면 다시 생산
+                    if (state.pBoard > 0) processUpstream();
+                }, 1000);
+            }, 100);
+        }
+
+        // 스페이스바 지원
+        window.addEventListener('keydown', (e) => {
+            if (e.code === 'Space') triggerDemand();
+        });
+    </script>
+</body>
+</html>
